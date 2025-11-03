@@ -114,8 +114,7 @@ graph LR
         B6 --> B7[WebSocket notify]
     end
     
-    style L3 fill:#faa
-    style B4 fill:#afa
+
 ```
 
 **Diferencias clave:**
@@ -220,10 +219,6 @@ graph TD
     S1 --> R1[IncidentRelation<br/>type: SPLIT]
     S2 --> R1
     
-    style O fill:#faa
-    style S1 fill:#afa
-    style S2 fill:#afa
-    style R1 fill:#aaf
 ```
 
 **Transacción atómica:**

@@ -82,10 +82,7 @@ graph TB
     CAM --> IM
     GPS --> RM
     PHONE --> IM
-    
-    style BSV fill:#f9f,stroke:#333,stroke-width:4px
-    style IDX fill:#bbf,stroke:#333,stroke-width:2px
-    style IM fill:#bfb,stroke:#333,stroke-width:2px
+
 ```
 
 ## Arquitectura general

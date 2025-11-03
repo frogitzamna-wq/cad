@@ -398,7 +398,8 @@ stateDiagram-v2
     CREATED --> PENDING: validate()
     PENDING --> DISPATCHED: dispatch()
     DISPATCHED --> EN_ROUTE: unitEnRoute()
-    EN_ROUTE --> ON_SCENE: unitOnScene()
+    EN_ROUTE --> O
+    N_SCENE: unitOnScene()
     ON_SCENE --> RESOLVED: resolve()
     RESOLVED --> CLOSED: close()
     
