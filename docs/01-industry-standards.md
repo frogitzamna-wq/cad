@@ -175,72 +175,79 @@ La Association of Public-Safety Communications Officials (APCO) define estándar
 | Dispatch Time | < 60s | Tiempo desde decisión de despacho hasta notificación |
 | Unit Response Time | < 8 min (P1) | Tiempo desde despacho hasta llegada a escena |
 
-## 4. Mapeo con sistema legacy Promad
+## 4. Migración de sistemas legacy típicos
 
-### 4.1 Entidades del sistema legacy vs. estándares
+### 4.1 Patrones comunes en sistemas CAD existentes
 
-| Estándar | Entidad Legacy | Mapeo |
-|----------|----------------|-------|
-| Incident | `Event` | ✅ Mapeo directo |
-| Incident Status | `StatusEnum` (OPEN/CLOSED) | ⚠️ Requiere estados adicionales (PENDING, DISPATCHED, ON_SCENE) |
-| Incident Type | `EventType` | ✅ Mapeo directo |
-| Incident Priority | `ReasonPriority` | ✅ Mapeo directo |
-| Incident Location | `EventLocation` | ✅ Mapeo directo (soporta múltiples ubicaciones) |
-| Resource/Unit | No identificado aún | ❌ Requiere investigación en otros microservicios |
-| Agency/PSAP | `Branch` (via `EventBranch`) | ✅ Mapeo directo |
-| Incident Relation | `EventRelation` (COMBINE/RELATE/PARENT) | ✅ Mapeo directo |
-| Call Record | `PreliminaryEvent` | ✅ Mapeo parcial (pre-incidente) |
-| Audit Log | `EventLog` | ✅ Mapeo directo |
+Los sistemas CAD legacy típicamente implementan los siguientes patrones:
 
-### 4.2 Operaciones del sistema legacy vs. ciclo de vida estándar
+| Componente estándar | Patrón legacy común | Consideraciones de migración |
+|---------------------|---------------------|------------------------------|
+| **Incident Management** | Entidades tipo "Event" o "Case" | ✅ Mapeo directo a IncidentContract |
+| **Incident Status** | Estados binarios (OPEN/CLOSED) | ⚠️ Expandir a estados intermedios (PENDING, DISPATCHED, ON_SCENE) |
+| **Incident Type** | Catálogos predefinidos | ✅ Preservar taxonomía existente |
+| **Incident Priority** | Niveles P1-P5 | ✅ Mapeo directo |
+| **Location Tracking** | Registros de ubicación | ✅ Geohash indexing en blockchain |
+| **Resource Management** | Unidades/vehículos | ⚠️ Frecuentemente distribuido en múltiples servicios |
+| **Agency/Jurisdiction** | Entidades organizacionales | ✅ AgencyContract con permisos blockchain |
+| **Incident Relations** | Merge/split/relate operations | ✅ IncidentRelationContract |
+| **Call Records** | Logs de llamadas | ✅ Anclar grabaciones a UHRP |
+| **Audit Trail** | Tablas de log | ✅ Event sourcing nativo en blockchain |
 
-| Fase estándar | Operación Legacy | Notas |
-|---------------|------------------|-------|
-| Call Reception | `PreliminaryEvent.create` | Pre-incidente en sistema legacy |
-| Incident Creation | `EventService.createEvent` | ✅ Asíncrono con Kafka |
-| Classification | Parte de `createEvent` | Asignación de `EventReason` y `ReasonPriority` |
-| Dispatch | No identificado | ⚠️ Requiere investigación (posiblemente en `event-workflow-ms`) |
-| Status Updates | `EventService.updateEvent` | ✅ Con propagación Kafka |
-| Incident Relations | `splitEvent`, `combineEvent`, `relateEvent`, `extendEvent` | ✅ Soporta múltiples tipos de relación |
-| Resource Assignment | `assignBranches`, `unassignBranches` | ⚠️ Parece gestión de agencias, no unidades |
-| Closure | `EventService.closeEvent` | ✅ Con `ClosureReport` |
-| Reopen | `EventService.reopenEvent` | ✅ Cambio de estado CLOSED → OPEN |
+### 4.2 Operaciones legacy vs. ciclo de vida NENA
 
-### 4.3 Gaps identificados en sistema legacy
+| Fase estándar | Operación legacy típica | Implementación blockchain |
+|---------------|-------------------------|---------------------------|
+| **Call Reception** | Crear registro preliminar | PreliminaryCallEvent → blockchain |
+| **Incident Creation** | INSERT en tabla incidents | IncidentContract.create() |
+| **Classification** | UPDATE incident_type, priority | IncidentContract.updateData() |
+| **Dispatch** | Asignar recursos a incidente | DispatchContract.dispatch() |
+| **Status Updates** | UPDATE incident_status | IncidentContract.changeStatus() |
+| **Incident Relations** | Operaciones merge/split/relate | IncidentRelationContract |
+| **Resource Assignment** | Link tables: incidents_resources | DispatchContract + ResourceContract |
+| **Closure** | UPDATE status = CLOSED + report | IncidentContract.close() |
+| **Reopen** | UPDATE status = OPEN | IncidentContract.reopen() |
 
-**1. Estados intermedios de incidente:**
-- Sistema actual: solo OPEN/CLOSED
-- Requerido por estándares: PENDING, DISPATCHED, EN_ROUTE, ON_SCENE, RESOLVED, CLOSED
+### 4.3 Gaps típicos en sistemas legacy
 
-**2. Gestión de recursos/unidades:**
-- No se encontró modelo de unidad/recurso en `event-core-ms`
-- Se requiere investigación en otros microservicios
+**1. Estados intermedios:**
+- **Legacy**: Usualmente 2-3 estados (OPEN, CLOSED, posiblemente IN_PROGRESS)
+- **Requerido**: CREATED → PENDING → DISPATCHED → EN_ROUTE → ON_SCENE → RESOLVED → CLOSED
 
-**3. Despacho automatizado:**
-- No se identificó lógica de asignación automática de recursos
-- Posiblemente en `event-workflow-ms` (pendiente investigación)
+**2. Gestión de recursos distribuida:**
+- **Legacy**: Información de unidades/recursos en servicios separados (fleet management, HR, etc.)
+- **Requerido**: Vista unificada de recursos disponibles en tiempo real
 
-**4. Interoperabilidad CAD-to-CAD:**
-- Sistema tiene soporte multi-agencia vía `EventBranch`
-- No se identificó API de intercambio entre agencias (posiblemente en `ms-interoperabilidad`)
+**3. Despacho manual vs. automático:**
+- **Legacy**: Asignación manual por dispatcher
+- **Requerido**: Algoritmos de asignación automática (proximidad, disponibilidad, capacidades)
 
-## 5. Recomendaciones para migración blockchain
+**4. Interoperabilidad limitada:**
+- **Legacy**: Integración punto-a-punto entre agencias específicas
+- **Requerido**: Protocolos estándar (APCO) para cualquier agencia
 
-### 5.1 Preservar del sistema legacy
+**5. Auditoría mutable:**
+- **Legacy**: Logs en bases de datos relacionales (pueden editarse/borrarse)
+- **Requerido**: Trail inmutable en blockchain
 
-✅ **Modelo de datos robusto:**
-- `Event` con soporte multi-ubicación
-- Relaciones entre incidentes bien definidas
-- Auditoría completa con `EventLog`
-- Multi-agencia con `EventBranch`
+## 5. Arquitectura de migración blockchain
+
+### 5.1 Preservar fortalezas del legacy
+
+✅ **Modelo de datos existente:**
+- Mapear entidades legacy a contratos sCrypt
+- Preservar relaciones entre incidentes
+- Mantener categorización y prioridades establecidas
+- Respetar workflows operacionales
 
 ✅ **Event sourcing implícito:**
-- Mensajería Kafka para cada operación
-- Tipos de operación: PERSIST, UPDATE, DELETE
+- Muchos sistemas legacy usan message queues (Kafka, RabbitMQ)
+- Migrar a blockchain como event store inmutable
+- Preservar tipos de eventos existentes
 
-### 5.2 Mejorar en migración
+### 5.2 Expandir capacidades
 
-⚠️ **Expandir estados de incidente:**
+⚠️ **Estados de incidente enriquecidos:**
 ```typescript
 enum IncidentStatus {
   CREATED = "CREATED",
@@ -253,7 +260,7 @@ enum IncidentStatus {
 }
 ```
 
-⚠️ **Agregar gestión de recursos:**
+⚠️ **Gestión unificada de recursos:**
 ```typescript
 interface Resource {
   id: string;
@@ -265,20 +272,21 @@ interface Resource {
 }
 ```
 
-⚠️ **Implementar interoperabilidad CAD-to-CAD:**
-- API REST para notificaciones entre agencias
-- Mensajes APCO-compliant
-- Autenticación basada en certificados blockchain
+⚠️ **Interoperabilidad estándar:**
+- API REST/GraphQL para notificaciones APCO-compliant
+- Mensajería P2P vía Message Box
+- Autenticación basada en DIDs blockchain
 
 ### 5.3 Arquitectura blockchain propuesta
 
 **1. Contratos inteligentes sCrypt:**
 ```
-IncidentContract - Gestión de ciclo de vida del incidente
-ResourceContract - Gestión de recursos/unidades
-DispatchContract - Lógica de asignación automática
-AgencyContract - Permisos y compartición entre agencias
-AuditContract - Log inmutable de todas las acciones
+IncidentContract       - Gestión de ciclo de vida del incidente
+ResourceContract       - Gestión de recursos/unidades
+DispatchContract       - Lógica de asignación automática
+AgencyContract         - Permisos y compartición entre agencias
+IncidentRelationContract - Merge/split de incidentes
+AuditContract          - Log inmutable de todas las acciones
 ```
 
 **2. Transacciones UTXO como event sourcing:**
@@ -291,11 +299,45 @@ AuditContract - Log inmutable de todas las acciones
 - Overlay network para queries en tiempo real
 - Indexación por: agency, location, status, priority, resource
 - Notificaciones push vía WebSocket
+- Geohash indexing para queries espaciales
 
-## 6. Próximos pasos
+**4. Almacenamiento de evidencia:**
+- UHRP para video/audio/imágenes
+- Anclas blockchain para integridad
+- sCrypt contracts para access control (multisig)
 
-1. ✅ **Investigar `event-workflow-ms`** - Lógica de despacho y workflows
-2. ⏳ **Buscar gestión de recursos** - Posiblemente en microservicios separados
-3. ⏳ **Revisar `ms-interoperabilidad`** - API de intercambio entre agencias
-4. ⏳ **Diseñar contratos sCrypt** - Basado en operaciones legacy identificadas
-5. ⏳ **Implementar PoC** - Crear incidente → Actualizar → Cerrar en blockchain
+## 6. Estrategia de migración por fases
+
+### Fase 1: Adapter Layer (Mes 1-3)
+- Deploy adapters para telephony, video, messaging
+- Dual-write: legacy DB + blockchain
+- Cero disrupción operacional
+
+### Fase 2: Evidence Migration (Mes 4-9)
+- Migrar evidencia histórica a UHRP
+- Implementar sCrypt access controls
+- Issue DIDs para todos los usuarios
+
+### Fase 3: Event Sourcing (Mes 10-15)
+- Reemplazar message queues con blockchain
+- Deploy SPV indexers
+- Deprecar bases de datos mutables
+
+### Fase 4: Full Blockchain-Native (Mes 16-18)
+- Wallet-native UI para dispatchers
+- IoT devices escriben directamente a blockchain
+- Decommissionar sistemas legacy
+
+## 7. Referencias
+
+- **NENA i3 Standard**: https://www.nena.org/page/i3_Stage3
+- **APCO Standards**: https://www.apcointl.org/standards
+- **BSV Teranode**: https://teranode.bsvblockchain.org
+- **sCrypt**: https://scrypt.io
+- **BSV Association**: https://www.bsvblockchain.org
+
+---
+
+**Status**: 📋 Reference Document  
+**Version**: 2.0 - Obfuscated (Generic Legacy Patterns)  
+**Updated**: 2025-11-03 18:45 CST

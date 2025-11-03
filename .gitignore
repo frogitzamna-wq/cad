@@ -46,6 +46,8 @@ blockchain/
 *.dat
 
 # Internal documentation (not for public repo)
+.private/
 INVENTORY.md
 WARP.md
+WARP-bkp.md
 WARP.md
