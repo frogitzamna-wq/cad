@@ -676,13 +676,6 @@ See [LICENSE](LICENSE) file for full details.
 
 This software is provided as-is. Use at your own risk.
 
----
-
-## Contact & Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-org/bsv-cad/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/bsv-cad/discussions)
-- **Email**: support@example.com
 
 ---
 
