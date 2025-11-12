@@ -7,3 +7,4 @@
 export { IncidentManager } from './IncidentManager';
 export { ResourceManager } from './ResourceManager';
 export { DispatchManager } from './DispatchManager';
+export { AgencyManager } from './AgencyManager';

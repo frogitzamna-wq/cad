@@ -275,10 +275,13 @@ class DispatchManager {
 
 ```typescript
 class AgencyManager {
-  async registerAgency(id: string, data: AgencyData, privKey: PrivateKey): Promise<string>
-  async updateAuthorizedKeys(id: string, keys: string[], privKey: PrivateKey): Promise<string>
-  async updateJurisdiction(id: string, jurisdiction: GeoJSON, privKey: PrivateKey): Promise<string>
-  async getAgency(id: string): Promise<AgencyData>
+  async registerAgency(agencyId: string, agencyName: string, agencyPubKey: string, adminPubKeys: string[]): Promise<string>
+  async addSharedIncident(agencyId: string, incidentId: string): Promise<string>
+  async removeSharedIncident(agencyId: string, incidentId: string): Promise<string>
+  async updateAdmins(agencyId: string, newAdminPubKeys: string[]): Promise<string>
+  async getAgency(agencyId: string): Promise<AgencyDetails>
+  async listSharedIncidents(agencyId: string): Promise<string[]>
+  async isIncidentShared(agencyId: string, incidentId: string): Promise<boolean>
 }
 ```
 
@@ -461,14 +464,19 @@ npm run deploy:mainnet
 
 4. **Initialize Agencies**:
 ```typescript
-const agencyManager = new AgencyManager(broadcastUrl, indexerUrl);
+const agencyPrivKey = PrivateKey.fromWIF('agency-wif-key');
+const agencyManager = new AgencyManager(broadcastUrl, indexerUrl, agencyPrivKey);
 
-await agencyManager.registerAgency('AGENCY-ID', {
-  name: 'Police Department',
-  jurisdiction: { /* GeoJSON polygon */ },
-  contactInfo: { phone: '+1-555-1234', email: 'dispatch@pd.gov' },
-  authorizedKeys: [pubKey1, pubKey2, pubKey3]
-}, supervisorPrivKey);
+// Register agency with admins
+const agencyId = 'AGENCY-PD-001';
+const agencyName = 'Police Department';
+const agencyPubKey = agencyPrivKey.toPublicKey().toString();
+const adminPubKeys = [pubKey1, pubKey2, pubKey3];
+
+await agencyManager.registerAgency(agencyId, agencyName, agencyPubKey, adminPubKeys);
+
+// Share an incident across agencies
+await agencyManager.addSharedIncident(agencyId, incidentId);
 ```
 
 5. **Register Resources**:

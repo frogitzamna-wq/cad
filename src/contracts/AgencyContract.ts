@@ -7,7 +7,8 @@ import {
   PubKey,
   Sig,
   SmartContract,
-  FixedArray
+  FixedArray,
+  toByteString
 } from 'scrypt-ts';
 
 /**

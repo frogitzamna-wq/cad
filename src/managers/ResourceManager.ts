@@ -1,4 +1,4 @@
-import { PrivateKey, Transaction } from 'bsv';
+import * as bsv from 'bsv';
 import {
   ResourceData,
   ResourceStatus,
@@ -29,7 +29,7 @@ export class ResourceManager {
     if (!response.ok) {
       throw new Error(`Resource not found: ${resourceId}`);
     }
-    return response.json();
+    return response.json() as Promise<ResourceData>;
   }
 
   /**
@@ -38,7 +38,7 @@ export class ResourceManager {
   async updateStatus(
     resourceId: string,
     newStatus: ResourceStatus,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       const resource = await this.getResource(resourceId);
@@ -65,7 +65,7 @@ export class ResourceManager {
   async updateLocation(
     resourceId: string,
     location: GeoLocation,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       const resource = await this.getResource(resourceId);
@@ -86,7 +86,7 @@ export class ResourceManager {
    */
   async batchUpdateLocations(
     updates: Array<{ resourceId: string; location: GeoLocation }>,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       const tx = await this.buildBatchUpdateLocationsTx(updates, operatorPrivKey);
@@ -119,13 +119,13 @@ export class ResourceManager {
       throw new Error('No available resources found');
     }
 
-    return response.json();
+    return response.json() as Promise<ResourceData & { distance: number }>;
   }
 
   /**
    * Release resource from incident
    */
-  async release(resourceId: string, operatorPrivKey: PrivateKey): Promise<string> {
+  async release(resourceId: string, operatorPrivKey: bsv.PrivateKey): Promise<string> {
     try {
       const resource = await this.getResource(resourceId);
       const tx = await this.buildReleaseTx(resource, operatorPrivKey);
@@ -157,38 +157,38 @@ export class ResourceManager {
   private async buildUpdateStatusTx(
     resource: ResourceData,
     newStatus: ResourceStatus,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual transaction building
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   private async buildUpdateLocationTx(
     resource: ResourceData,
     location: GeoLocation,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual transaction building
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   private async buildBatchUpdateLocationsTx(
     updates: Array<{ resourceId: string; location: GeoLocation }>,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement batch transaction building
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   private async buildReleaseTx(
     resource: ResourceData,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual transaction building
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
-  private async broadcast(tx: Transaction): Promise<string> {
+  private async broadcast(tx: bsv.Transaction): Promise<string> {
     const response = await fetch(this.broadcastUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -199,7 +199,7 @@ export class ResourceManager {
       throw new Error('Failed to broadcast transaction');
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     return result.txid || tx.id;
   }
 }

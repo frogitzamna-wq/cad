@@ -6,7 +6,8 @@ import {
   prop,
   PubKey,
   Sig,
-  SmartContract
+  SmartContract,
+  toByteString
 } from 'scrypt-ts';
 
 /**

@@ -1,4 +1,4 @@
-import { PrivateKey, Transaction, Script } from 'bsv';
+import * as bsv from 'bsv';
 import * as crypto from 'crypto';
 import {
   IncidentData,
@@ -30,7 +30,7 @@ export class IncidentManager {
    */
   async createIncident(
     data: IncidentData,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Set timestamp if not provided
@@ -63,7 +63,7 @@ export class IncidentManager {
   async updateIncident(
     incidentId: string,
     updates: Partial<IncidentData>,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch current incident UTXO
@@ -101,7 +101,7 @@ export class IncidentManager {
   async updateStatus(
     incidentId: string,
     newStatus: IncidentStatus,
-    userPrivKey: PrivateKey
+    userPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch current incident UTXO
@@ -138,7 +138,7 @@ export class IncidentManager {
     incidentId: string,
     closureReport: ClosureReport,
     duration: number,
-    supervisorPrivKey: PrivateKey
+    supervisorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch current incident UTXO
@@ -175,7 +175,7 @@ export class IncidentManager {
    */
   async reopenIncident(
     incidentId: string,
-    supervisorPrivKey: PrivateKey
+    supervisorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch current incident UTXO
@@ -206,7 +206,7 @@ export class IncidentManager {
    */
   async splitIncident(
     incidentId: string,
-    supervisorPrivKey: PrivateKey
+    supervisorPrivKey: bsv.PrivateKey
   ): Promise<{ originalTxid: string; newTxid: string }> {
     try {
       // Fetch current incident UTXO
@@ -242,7 +242,7 @@ export class IncidentManager {
   async combineIncidents(
     sourceIncidentId: string,
     destIncidentId: string,
-    supervisorPrivKey: PrivateKey
+    supervisorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch both incident UTXOs
@@ -287,7 +287,7 @@ export class IncidentManager {
   async shareIncident(
     incidentId: string,
     agencyPubKey: string,
-    supervisorPrivKey: PrivateKey
+    supervisorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // Fetch current incident UTXO
@@ -323,7 +323,7 @@ export class IncidentManager {
   async addFieldNotes(
     incidentId: string,
     notes: any,
-    operatorPrivKey: PrivateKey
+    operatorPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       // This creates a new TX with notes in OP_RETURN
@@ -382,12 +382,12 @@ export class IncidentManager {
   private async buildCreateIncidentTx(
     data: IncidentData,
     dataHash: string,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual transaction building with IncidentContract
     // This is a placeholder showing the structure
     
-    const tx = new Transaction();
+    const tx = new bsv.Transaction();
     
     // Input: Funding UTXO from operator
     // (would need to fetch available UTXOs)
@@ -397,7 +397,7 @@ export class IncidentManager {
     // Output 2: Change
     
     // Add OP_RETURN with metadata
-    const metadata: TransactionMetadata = {
+    const metadata = {
       version: 1,
       eventType: 'INCIDENT_CREATED',
       timestamp: data.timestamp!,
@@ -405,8 +405,8 @@ export class IncidentManager {
       payload: data
     };
     
-    const opReturnScript = Script.buildSafeDataOut(Buffer.from(JSON.stringify(metadata)));
-    tx.addOutput(new Transaction.Output({
+    const opReturnScript = bsv.Script.buildSafeDataOut(Buffer.from(JSON.stringify(metadata)));
+    tx.addOutput(new bsv.Transaction.Output({
       script: opReturnScript,
       satoshis: 0
     }));
@@ -424,10 +424,10 @@ export class IncidentManager {
     currentUtxo: any,
     newDataHash: string,
     newPriority: number,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual update transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -436,10 +436,10 @@ export class IncidentManager {
   private async buildChangeStatusTx(
     currentUtxo: any,
     newStatus: IncidentStatus,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual status change transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -449,10 +449,10 @@ export class IncidentManager {
     currentUtxo: any,
     closureReport: ClosureReport,
     duration: number,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual close transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -460,10 +460,10 @@ export class IncidentManager {
    */
   private async buildReopenIncidentTx(
     currentUtxo: any,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual reopen transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -471,10 +471,10 @@ export class IncidentManager {
    */
   private async buildSplitIncidentTx(
     currentUtxo: any,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual split transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -483,10 +483,10 @@ export class IncidentManager {
   private async buildCombineIncidentsTx(
     sourceUtxo: any,
     destUtxo: any,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual combine transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -495,10 +495,10 @@ export class IncidentManager {
   private async buildShareIncidentTx(
     currentUtxo: any,
     agencyPubKey: string,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement actual share transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -507,10 +507,10 @@ export class IncidentManager {
   private async buildFieldNotesTx(
     incidentId: string,
     notes: any,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement field notes transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   /**
@@ -529,7 +529,7 @@ export class IncidentManager {
   /**
    * Broadcast transaction to BSV network
    */
-  private async broadcast(tx: Transaction): Promise<string> {
+  private async broadcast(tx: bsv.Transaction): Promise<string> {
     // TODO: Implement actual broadcast
     // This would send the transaction to a BSV node
     const response = await fetch(this.broadcastUrl, {
@@ -542,7 +542,7 @@ export class IncidentManager {
       throw new Error('Failed to broadcast transaction');
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     return result.txid || tx.id;
   }
 }

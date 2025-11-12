@@ -1,4 +1,4 @@
-import { PrivateKey, Transaction } from 'bsv';
+import * as bsv from 'bsv';
 import { DispatchData, ResourceManager, IncidentManager } from '../';
 
 /**
@@ -31,7 +31,7 @@ export class DispatchManager {
   async dispatch(params: {
     incidentId: string;
     resourceIds: string[];
-    dispatcherPrivKey: PrivateKey;
+    dispatcherPrivKey: bsv.PrivateKey;
     notes?: string;
   }): Promise<string> {
     try {
@@ -102,7 +102,7 @@ export class DispatchManager {
    */
   async cancelDispatch(
     dispatchId: string,
-    dispatcherPrivKey: PrivateKey
+    dispatcherPrivKey: bsv.PrivateKey
   ): Promise<string> {
     try {
       const tx = await this.buildCancelDispatchTx(dispatchId, dispatcherPrivKey);
@@ -122,23 +122,23 @@ export class DispatchManager {
   private async buildDispatchTx(
     incidentId: string,
     resourceIds: string[],
-    privKey: PrivateKey,
+    privKey: bsv.PrivateKey,
     notes?: string
-  ): Promise<Transaction> {
+  ): Promise<bsv.Transaction> {
     // TODO: Implement atomic dispatch transaction
     // This should:
     // 1. Update incident status to DISPATCHED
     // 2. Update all resources to DISPATCHED
     // 3. Create DispatchContract UTXOs for each assignment
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   private async buildCancelDispatchTx(
     dispatchId: string,
-    privKey: PrivateKey
-  ): Promise<Transaction> {
+    privKey: bsv.PrivateKey
+  ): Promise<bsv.Transaction> {
     // TODO: Implement cancel dispatch transaction
-    return new Transaction();
+    return new bsv.Transaction();
   }
 
   private async getIncidentFromIndexer(incidentId: string): Promise<any> {
@@ -149,13 +149,13 @@ export class DispatchManager {
     return response.json();
   }
 
-  private getAutoDispatchKey(): PrivateKey {
+  private getAutoDispatchKey(): bsv.PrivateKey {
     // TODO: Load from secure configuration
     // This is a placeholder
     throw new Error('Auto-dispatch key not configured');
   }
 
-  private async broadcast(tx: Transaction): Promise<string> {
+  private async broadcast(tx: bsv.Transaction): Promise<string> {
     const response = await fetch(this.broadcastUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -166,7 +166,7 @@ export class DispatchManager {
       throw new Error('Failed to broadcast transaction');
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     return result.txid || tx.id;
   }
 }
