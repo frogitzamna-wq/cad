@@ -1,0 +1,214 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cad-app
+  labels:
+    app: cad
+    component: application
+    version: v1
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cad
+      component: application
+  template:
+    metadata:
+      labels:
+        app: cad
+        component: application
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cad-app
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: cad-app
+        image: ghcr.io/frogitzamna-wq/cad:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: PROMETHEUS_PORT
+          value: "9090"
+        - name: BSV_NETWORK
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: bsv.network
+        - name: BROADCAST_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: bsv.broadcastUrl
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: postgres.host
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: postgres.database
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: postgres.user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: postgres.password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: redis.host
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: redis.password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: jwt.secret
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: cad-data
+          mountPath: /app/data
+        - name: cad-logs
+          mountPath: /app/logs
+        - name: keys
+          mountPath: /app/keys
+          readOnly: true
+      volumes:
+      - name: cad-data
+        persistentVolumeClaim:
+          claimName: cad-data-pvc
+      - name: cad-logs
+        emptyDir: {}
+      - name: keys
+        secret:
+          secretName: cad-keys
+          defaultMode: 0400
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cad-indexer
+  labels:
+    app: cad
+    component: indexer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cad
+      component: indexer
+  template:
+    metadata:
+      labels:
+        app: cad
+        component: indexer
+    spec:
+      serviceAccountName: cad-indexer
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+      - name: indexer
+        image: ghcr.io/frogitzamna-wq/cad:latest
+        imagePullPolicy: Always
+        command: ["node", "dist/indexer.js"]
+        env:
+        - name: SERVICE_MODE
+          value: "indexer"
+        - name: BSV_NETWORK
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: bsv.network
+        - name: INDEXER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: bsv.indexerUrl
+        - name: POLL_INTERVAL
+          value: "3000"
+        - name: CHECKPOINT_INTERVAL
+          value: "10"
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: cad-config
+              key: postgres.host
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: postgres.user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cad-secrets
+              key: postgres.password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: indexer-data
+          mountPath: /app/data
+      volumes:
+      - name: indexer-data
+        persistentVolumeClaim:
+          claimName: indexer-data-pvc

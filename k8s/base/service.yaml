@@ -1,0 +1,120 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cad-app
+  labels:
+    app: cad
+    component: application
+spec:
+  type: ClusterIP
+  selector:
+    app: cad
+    component: application
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cad-app-external
+  labels:
+    app: cad
+    component: application
+spec:
+  type: LoadBalancer
+  selector:
+    app: cad
+    component: application
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cad-config
+data:
+  bsv.network: "mainnet"
+  bsv.broadcastUrl: "https://api.whatsonchain.com/v1/bsv/main/tx/raw"
+  bsv.indexerUrl: "https://api.whatsonchain.com/v1/bsv/main"
+  uhrp.endpoint: "https://uhrp.babbage.systems"
+  messagebox.url: "https://messagebox.babbage.systems"
+  did.resolverUrl: "https://identity.bsvblockchain.org"
+  postgres.host: "postgres"
+  postgres.port: "5432"
+  postgres.database: "cad"
+  redis.host: "redis"
+  redis.port: "6379"
+  log.level: "info"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cad-app
+  labels:
+    app: cad
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cad-indexer
+  labels:
+    app: cad
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cad-app-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cad-app-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: cad-app
+roleRef:
+  kind: Role
+  name: cad-app-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cad-data-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: indexer-data-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
