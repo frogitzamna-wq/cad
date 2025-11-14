@@ -39,6 +39,7 @@
 | **PostgreSQL** | `cad-postgres` | ✅ Running | 5432 | postgres:16-alpine |
 | **Redis** | `cad-redis` | ✅ Running | 6379 | redis:7-alpine |
 | **CAD Application** | `cad-app` | ✅ Running | 3000 | cad-bsv:dev |
+| **SPV Indexer** | `cad-indexer` | ✅ Running | - | cad-indexer:dev |
 
 ---
 
