@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production && npm install -D typescript ts-node @types/node
+
+# Copy source
+COPY tsconfig.json ./
+COPY src ./src
+
+# Run indexer service
+CMD ["npx", "ts-node", "--transpile-only", "src/indexer-service.ts"]
