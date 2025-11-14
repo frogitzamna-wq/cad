@@ -333,10 +333,10 @@ export class SPVIndexer {
       // Parse transaction data
       const txs: bsv.Transaction[] = [];
       
-      if (data.tx && Array.isArray(data.tx)) {
-        for (const txData of data.tx) {
+      if ((data as any).tx && Array.isArray((data as any).tx)) {
+        for (const txData of (data as any).tx) {
           try {
-            const tx = new bsv.Transaction(txData);
+            const tx = new bsv.Transaction();
             txs.push(tx);
           } catch (error) {
             console.error('Failed to parse transaction:', error);

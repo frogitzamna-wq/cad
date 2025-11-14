@@ -1,0 +1,16 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production && npm install -D typescript ts-node @types/node
+
+# Copy source
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run with ts-node (no compilation)
+CMD ["npx", "ts-node", "--transpile-only", "src/server.ts"]

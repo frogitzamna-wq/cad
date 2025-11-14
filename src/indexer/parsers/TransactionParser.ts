@@ -56,8 +56,9 @@ export class TransactionParser {
    * Find OP_RETURN output in transaction
    */
   private findOPReturnOutput(tx: bsv.Transaction): any | null {
-    for (let i = 0; i < tx.outputs.length; i++) {
-      const output = tx.outputs[i];
+    const outputs = (tx as any).outputs || [];
+    for (let i = 0; i < outputs.length; i++) {
+      const output = outputs[i];
       
       // Check if this is OP_RETURN (starts with 0x6a)
       if (output.script && output.script.toBuffer()[0] === 0x6a) {
